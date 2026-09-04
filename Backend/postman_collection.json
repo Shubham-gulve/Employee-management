@@ -1,0 +1,226 @@
+{
+  "info": {
+    "name": "Employee Management System",
+    "description": "Login once, then every other request reuses the saved token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "employeeId", "value": "" },
+    { "key": "stateId", "value": "" },
+    { "key": "departmentId", "value": "" },
+    { "key": "cityId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "auth": { "type": "noauth" },
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.token) pm.collectionVariables.set('token', body.token);",
+                  "pm.test('login succeeds', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@gmail.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "noauth" },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"new.user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Returns 403 unless ALLOW_REGISTRATION=true."
+          }
+        },
+        {
+          "name": "Current user",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/auth/me" }
+        }
+      ]
+    },
+    {
+      "name": "Masters",
+      "item": [
+        {
+          "name": "Departments (typeahead)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rows = pm.response.json().data;",
+                  "if (rows.length) pm.collectionVariables.set('departmentId', rows[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/masters/departments?search=fin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "masters", "departments"],
+              "query": [{ "key": "search", "value": "fin" }]
+            }
+          }
+        },
+        {
+          "name": "States",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rows = pm.response.json().data;",
+                  "if (rows.length) pm.collectionVariables.set('stateId', rows[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/masters/states" }
+        },
+        {
+          "name": "Cities for a state",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rows = pm.response.json().data;",
+                  "if (rows.length) pm.collectionVariables.set('cityId', rows[0]._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/masters/cities?stateId={{stateId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "masters", "cities"],
+              "query": [{ "key": "stateId", "value": "{{stateId}}" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Employees",
+      "item": [
+        {
+          "name": "Create",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.data) pm.collectionVariables.set('employeeId', body.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Asha Mehta", "type": "text" },
+                { "key": "email", "value": "asha.mehta@example.com", "type": "text" },
+                { "key": "phone", "value": "9876543210", "type": "text" },
+                { "key": "gender", "value": "F", "type": "text" },
+                { "key": "department", "value": "{{departmentId}}", "type": "text" },
+                { "key": "state", "value": "{{stateId}}", "type": "text" },
+                { "key": "city", "value": "{{cityId}}", "type": "text" },
+                { "key": "pincode", "value": "411001", "type": "text" },
+                { "key": "address", "value": "12 Model Colony", "type": "text" },
+                { "key": "isPermanent", "value": "true", "type": "text" },
+                { "key": "profilePicture", "type": "file", "src": [], "description": "Optional image, max 5MB" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/employees"
+          }
+        },
+        {
+          "name": "List (search + pagination)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/employees?search=&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "employees"],
+              "query": [
+                { "key": "search", "value": "" },
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get one",
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/employees/{{employeeId}}" }
+        },
+        {
+          "name": "Update",
+          "request": {
+            "method": "PUT",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Asha Mehta-Rao", "type": "text" },
+                { "key": "isPermanent", "value": "false", "type": "text" },
+                { "key": "profilePicture", "type": "file", "src": [], "description": "Optional, replaces the old file" }
+              ]
+            },
+            "url": "{{baseUrl}}/api/employees/{{employeeId}}"
+          }
+        },
+        {
+          "name": "Delete",
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/employees/{{employeeId}}" }
+        }
+      ]
+    }
+  ]
+}

@@ -80,6 +80,19 @@ Base: `http://localhost:3000`. Everything except `/health` and `/api/auth/*` nee
 
 Images are served at `/uploads/<filename>`.
 
+## Checking the API
+
+Import `Backend/postman_collection.json` into Postman: run **Login** first and every other
+request picks up the token automatically.
+
+Or run the whole thing from a terminal, failure cases included:
+
+```bash
+cd Backend
+bash scripts/api-smoke.sh                                   # against localhost:3000
+bash scripts/api-smoke.sh https://your-api.onrender.com you@example.com yourpassword
+```
+
 ## Employee fields
 
 `profilePicture` (optional image), `name`, `email` (unique, valid), `phone` (10 digits),
@@ -95,6 +108,8 @@ Backend/
   routes/         authRoutes, employeeRoutes, masterRoutes
   middleware/     authMiddleware (JWT), uploadMiddleware (Multer)
   config/         env.js (validated config), db.js
+  scripts/        api-smoke.sh (end-to-end endpoint check)
+  postman_collection.json
   seed.js         server.js
 Frontend/src/
   api/axioApi.js         axios instance, token handling, 401 redirect
